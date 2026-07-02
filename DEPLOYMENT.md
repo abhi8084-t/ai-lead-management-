@@ -111,6 +111,8 @@ Streamlit will install dependencies from the repo. If it asks for a requirements
 frontend/requirements.txt
 ```
 
+The frontend requirements are intentionally not pinned to old versions because Streamlit Cloud may use a newer Python runtime. This lets pip choose compatible wheels for packages such as Streamlit, Pandas, and Pillow.
+
 3. Add this secret/environment variable:
 
 ```env
