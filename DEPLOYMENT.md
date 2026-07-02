@@ -12,7 +12,9 @@ Do not commit local secrets or virtual environments.
 
 Required files:
 
-- `requirements.txt`
+- `backend/requirements.txt`
+- `frontend/requirements.txt`
+- `runtime.txt`
 - `backend/`
 - `frontend/`
 - `README.md`
@@ -41,10 +43,18 @@ For Render, use environment variables instead of committing certificates or cred
 
 Create a new Render Web Service from the GitHub repo.
 
+Python version:
+
+```text
+python-3.11.9
+```
+
+This is pinned in `runtime.txt`. Do not use Python 3.14 for this project because some dependencies may try to compile from source during deployment.
+
 Build command:
 
 ```bash
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 Start command:
@@ -93,6 +103,12 @@ https://your-render-backend.onrender.com/docs
 
 ```text
 frontend/Home.py
+```
+
+Streamlit will install dependencies from the repo. If it asks for a requirements file, use:
+
+```text
+frontend/requirements.txt
 ```
 
 3. Add this secret/environment variable:

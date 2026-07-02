@@ -75,7 +75,6 @@ ai-lead-management/
 |       |-- Lead_Details.py       # Lead detail and edit page
 |
 |-- run.py                        # Starts backend and frontend together
-|-- requirements.txt              # Python dependencies
 |-- .env                          # Local environment variables
 |-- README.md
 ```
@@ -100,7 +99,8 @@ From the project root:
 ```bash
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
+pip install -r frontend/requirements.txt
 ```
 
 ### 3. Configure Environment Variables
