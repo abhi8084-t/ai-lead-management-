@@ -1,111 +1,123 @@
 # AI Lead Management System
 
-An AI-powered lead management system that takes a visitor from a website form through CRM storage, AI qualification, and automated email.
+An AI-powered lead management system built for the Delipat AI Engineer Internship assessment. It captures leads from a public form, stores them in a CRM, qualifies them with AI, and triggers an automated acknowledgement email.
 
-**Flow:** Website Form -> MySQL Database (CRM) -> AI Qualification (Groq) -> Automated Email
+```text
+Website Form -> CRM Database -> AI Qualification -> Automated Email -> Sales Follow-up
+```
 
----
+## Live Links
+
+- Frontend: `https://ai-lead-management.streamlit.app/`
+- Backend API: `https://ai-lead-management.onrender.com`
+- API Docs: `https://ai-lead-management.onrender.com/docs`
+
+## Core Features
+
+- Landing page with lead capture form
+- Required field validation for name, email, phone, and project description
+- CRM dashboard with total, new, qualified, and lost lead counts
+- Search and filters for status, temperature, and industry
+- Row-level `View` action for reviewing a lead without manually typing an ID
+- Lead detail view with editable status, notes, owner, and follow-up date
+- AI lead scoring with score, temperature, confidence, reasoning, and next action
+- Automated acknowledgement email after lead creation
+- AI-personalized email body
+- CSV export for filtered leads
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Streamlit |
+| Backend | FastAPI |
+| Database | Aiven MySQL / local MySQL |
+| ORM | SQLAlchemy |
+| AI | Groq API |
+| Email | SMTP, Gmail app password supported |
+| Backend Deployment | Render |
+| Frontend Deployment | Streamlit Community Cloud |
 
 ## Architecture
 
 ```text
-frontend/ (Streamlit)                         backend/ (FastAPI)
+frontend/                                  backend/
 
-Home.py -------------------- HTTP ----------> routers/leads.py
-Landing page + lead form                       |
-                                               v
-pages/Dashboard.py -------- HTTP ----------> crud.py <-> database.py
-pages/Lead_Details.py                          |
-                                               v
-                                      services/ai_service.py
-                                      services/email_service.py
-                                      services/dashboard.py
-                                               |
-                                               v
-                                         MySQL Database
+Home.py --------------------- POST /leads -> routers/leads.py
+Lead capture form                            |
+                                             v
+pages/Dashboard.py ---------- GET /leads -> crud.py <-> database.py <-> MySQL
+CRM dashboard                                |
+                                             v
+pages/Lead_Details.py ------- PUT /leads -> services/
+Lead management                              |-- ai_service.py
+                                             |-- email_service.py
+                                             |-- dashboard.py
 ```
 
 When a lead is submitted:
 
-1. The form data is validated and saved to MySQL immediately with status `New`.
-2. In the background, Groq analyzes the lead's industry, company size, budget, and description.
-3. The AI result is saved back to the lead with a score, temperature, confidence, reasoning, and next action.
-4. The dashboard shows summary cards, charts, searchable lead rows, AI results, and editable CRM fields on one screen.
-5. If the lead is `Hot`, its status is automatically updated to `Qualified`.
-6. A personalized acknowledgement email is generated and sent automatically.
-
----
-
-## Tech Stack
-
-| Layer    | Technology               |
-|----------|--------------------------|
-| Frontend | Streamlit                |
-| Backend  | FastAPI                  |
-| Database | MySQL with SQLAlchemy    |
-| AI       | Groq API                 |
-| Email    | SMTP, typically Gmail    |
-
----
+1. The frontend sends lead details to the FastAPI backend.
+2. The backend saves the lead with status `New`.
+3. A background task asks Groq to qualify the lead.
+4. The AI result is saved back to the lead.
+5. Hot leads are automatically marked `Qualified`.
+6. The email service sends an acknowledgement email.
+7. The dashboard displays the full CRM and AI result.
 
 ## Project Structure
 
 ```text
 ai-lead-management/
 |-- backend/
-|   |-- main.py                   # FastAPI entry point
-|   |-- database.py               # MySQL connection and table setup
-|   |-- models.py                 # Lead table schema
-|   |-- schemas.py                # Pydantic request/response models
-|   |-- crud.py                   # Database operations
+|   |-- main.py
+|   |-- database.py
+|   |-- models.py
+|   |-- schemas.py
+|   |-- crud.py
+|   |-- requirements.txt
 |   |-- routers/
-|   |   |-- leads.py              # All /leads API endpoints
+|   |   |-- leads.py
 |   |-- services/
-|   |   |-- ai_service.py         # Groq-powered lead scoring
-|   |   |-- email_service.py      # SMTP email sending
-|   |   |-- dashboard.py          # Dashboard stat calculations
+|   |   |-- ai_service.py
+|   |   |-- dashboard.py
+|   |   |-- email_service.py
 |   |-- utils/
-|       |-- config.py             # Environment variable loader
+|       |-- config.py
 |
 |-- frontend/
-|   |-- Home.py                   # Landing page and lead form
-|   |-- api.py                    # Backend API calls
+|   |-- Home.py
+|   |-- api.py
+|   |-- requirements.txt
 |   |-- pages/
-|       |-- Dashboard.py          # CRM dashboard
-|       |-- Lead_Details.py       # Lead detail and edit page
+|       |-- Dashboard.py
+|       |-- Lead_Details.py
 |
-|-- run.py                        # Starts backend and frontend together
-|-- .env                          # Local environment variables
+|-- DEPLOYMENT.md
+|-- runtime.txt
+|-- run.py
 |-- README.md
 ```
 
----
+## Local Setup
 
-## Setup Instructions
-
-For free deployment with Aiven MySQL, Render, and Streamlit Community Cloud, see `DEPLOYMENT.md`.
-
-### 1. Prerequisites
-
-- Python 3.10+
-- MySQL server running locally or in the cloud
-- A Groq API key from `https://console.groq.com`
-- A Gmail account with an app password if you want SMTP email sending
-
-### 2. Install Dependencies
-
-From the project root:
+### 1. Create Virtual Environment
 
 ```bash
 python -m venv venv
 venv\Scripts\activate
+```
+
+### 2. Install Dependencies
+
+```bash
 pip install -r backend/requirements.txt
 pip install -r frontend/requirements.txt
 ```
 
 ### 3. Configure Environment Variables
 
-Create or edit `.env` in the project root:
+Create a `.env` file in the project root:
 
 ```env
 DB_HOST=localhost
@@ -113,8 +125,9 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=lead_management
+DB_SSL_REQUIRED=false
 
-GROQ_API_KEY=your_groq_api_key_here
+GROQ_API_KEY=your_groq_api_key
 
 EMAIL_SENDER=youremail@gmail.com
 EMAIL_APP_PASSWORD=your_gmail_app_password
@@ -124,81 +137,137 @@ SMTP_PORT=587
 BACKEND_URL=http://localhost:8000
 ```
 
-The backend creates the configured MySQL database and `leads` table automatically when it starts, as long as the MySQL user has permission to create databases.
+For Aiven MySQL, set `DB_SSL_REQUIRED=true`.
 
-### 4. Run the Project
+### 4. Run Backend
 
-Start both the backend and frontend together:
-
-```bash
-python run.py
-```
-
-This starts:
-
-- Backend API at `http://localhost:8000`
-- FastAPI docs at `http://localhost:8000/docs`
-- Streamlit frontend at `http://localhost:8501`
-
-Or run them separately:
+From the project root:
 
 ```bash
-# Terminal 1, from the project root
 uvicorn --app-dir backend main:app --reload --port 8000
-
-# Terminal 2
-cd frontend
-streamlit run Home.py
 ```
 
-You can also start the backend from inside the `backend` folder:
+Or use:
+
+```powershell
+.\start_backend.ps1
+```
+
+### 5. Run Frontend
+
+Open another terminal:
 
 ```bash
-cd backend
-uvicorn main:app --reload --port 8000
+streamlit run frontend/Home.py
 ```
 
----
+Frontend runs at:
+
+```text
+http://localhost:8501
+```
+
+Backend docs run at:
+
+```text
+http://localhost:8000/docs
+```
 
 ## API Endpoints
 
-| Method | Endpoint      | Description                         |
-|--------|---------------|-------------------------------------|
-| POST   | `/leads`      | Submit a new lead                   |
-| GET    | `/leads`      | Get all leads                       |
-| GET    | `/leads/stats`| Get dashboard counts                |
-| GET    | `/leads/{id}` | Get a single lead                   |
-| PUT    | `/leads/{id}` | Update status, notes, owner, follow-up |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | API health message |
+| POST | `/leads` | Submit a new lead |
+| GET | `/leads` | List all leads |
+| GET | `/leads/stats` | Get CRM dashboard counts |
+| GET | `/leads/{id}` | Get one lead |
+| PUT | `/leads/{id}` | Update CRM fields |
 
----
+## AI Prompts Used
 
-## AI Behavior
+### Lead Qualification Prompt
 
-The lead qualification prompt in `backend/services/ai_service.py` sends the lead's industry, company size, budget, and project description to Groq. It expects a JSON response with:
+The backend sends the lead's industry, company size, budget, and project description to Groq with instructions to return strict JSON:
 
-- `score`
-- `temperature`
-- `confidence`
-- `reasoning`
-- `next_action`
+```json
+{
+  "score": "integer 0-100",
+  "temperature": "Hot, Warm, or Cold",
+  "confidence": "integer 0-100",
+  "reasoning": "short explanation",
+  "next_action": "recommended next step"
+}
+```
 
-The email personalization prompt asks Groq to write a short acknowledgement email tailored to the lead's name, industry, and project description.
+The app validates and clamps the AI response before saving it.
 
----
+### Email Personalization Prompt
 
-## Frontend Highlights
+The backend asks Groq to write a short, warm, professional acknowledgement email tailored to the lead's name, industry, and project description.
 
-- Dashboard cards for total, new, qualified, and lost leads.
-- Search and filters for status, temperature, and industry.
-- Row-level `View` action to open a lead without manually typing an ID.
-- AI qualification panel with score progress, confidence, reasoning, and recommended action.
-- CSV export for filtered lead data.
-- Lead Details page automatically opens the selected dashboard lead.
+If AI fails, the system falls back to a generic acknowledgement email.
 
----
+## Deployment
+
+Deployment instructions are documented in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+Current deployment stack:
+
+- Database: Aiven MySQL
+- Backend: Render
+- Frontend: Streamlit Community Cloud
+
+Render backend:
+
+```bash
+pip install -r backend/requirements.txt
+uvicorn --app-dir backend main:app --host 0.0.0.0 --port $PORT
+```
+
+Streamlit main file:
+
+```text
+frontend/Home.py
+```
+
+Streamlit secret:
+
+```toml
+BACKEND_URL = "https://ai-lead-management.onrender.com"
+```
+
+## Demo Walkthrough
+
+For a 5-7 minute demo video:
+
+1. Open the Streamlit frontend.
+2. Submit a new lead from the Home page.
+3. Open Dashboard and show the lead in the pipeline.
+4. Wait a few seconds and refresh to show AI score, temperature, confidence, reasoning, and next action.
+5. Open the lead review section and update status, owner, notes, or follow-up date.
+6. Show backend `/docs` and API endpoints.
+7. Explain the AI prompts and tools used during development.
+
+## Assessment Coverage
+
+| Requirement | Status |
+|-------------|--------|
+| Landing page and lead form | Complete |
+| Form validation | Complete |
+| CRM dashboard cards | Complete |
+| Lead detail and CRM editing | Complete |
+| AI lead qualification | Complete |
+| Structured AI result | Complete |
+| Automated acknowledgement email | Complete |
+| AI-personalized email | Complete |
+| Search and filters | Complete |
+| Dashboard charts/summary | Complete |
+| CSV export | Complete |
 
 ## Notes
 
-- AI calls and email sending happen as background tasks after the lead is saved.
-- If the Groq API call fails, the system falls back to a default `Warm` score so the app keeps working.
-- `.env` is excluded from version control. Do not commit real credentials.
+- `.env` is ignored by git and must not be committed.
+- Render free instances may sleep after inactivity, so the first request can be slow.
+- If the Groq API fails, the app uses a safe fallback lead score so the CRM still works.
+- If email credentials are missing or invalid, lead creation still succeeds and email status remains pending/not sent.
